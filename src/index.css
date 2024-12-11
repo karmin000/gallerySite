@@ -1,0 +1,129 @@
+/* src/index.css */
+
+body {
+    font-family: Arial, sans-serif;
+    margin: 0;
+    padding: 0;
+    display: flex;
+    justify-content: center;
+    background-color: #f4f4f4;
+}
+
+h1 {
+    text-align: center;
+    margin-top: 20px;
+}
+
+.gallery {
+    display: flex;
+    flex-wrap: wrap;
+    justify-content: space-around;
+    padding: 20px;
+    width: 90%; /* Ширина галереи */
+    margin: 0 auto;
+}
+
+.image-item {
+    text-align: center;
+    background: #fff;
+    border-radius: 8px;
+    box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
+    margin-bottom: 20px;
+    width: 66.6vh; /* Три картинки в строке */
+    box-sizing: border-box;
+
+}
+
+.image-item img {
+    width: 100%;
+    height: 35vh; /* Высота изображения фиксированная, можно отрегулировать по своему усмотрению */
+    object-fit: cover; /* Убирает искажения изображения, оно будет заполнять блок */
+    display: block;
+    border-bottom: 1px solid #ddd;
+}
+
+.pagination {
+    display: flex;
+    justify-content: center;
+    margin-top: 20px;
+}
+
+button {
+    margin: 0 10px;
+    padding: 5px 10px;
+    cursor: pointer;
+    border: none;
+    background-color: #4CAF50;
+    color: white;
+    border-radius: 4px;
+    font-size: 14px;
+}
+
+button:disabled {
+    background-color: #ccc;
+}
+
+.pagination button.active {
+    font-weight: bold;
+    background-color: #007bff;
+    color: white;
+}
+
+
+button:hover:not(:disabled) {
+    background-color: #45a049;
+}
+
+.filter-container {
+    text-align: center;
+    margin-bottom: 20px;
+    width: 50vh;
+    justify-self: center;
+}
+
+.toggle-filters {
+    background-color: #007bff;
+    color: white;
+    padding: 10px 15px;
+    border: none;
+    border-radius: 5px;
+    cursor: pointer;
+}
+
+.toggle-filters:hover {
+    background-color: #0056b3;
+}
+
+.filter-menu {
+    background-color: #fff;
+    border: 1px solid #ddd;
+    border-radius: 5px;
+    padding: 15px;
+    margin-top: 10px;
+    box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
+    transition: max-height 0.3s ease-in-out;
+    overflow: hidden;
+
+}
+
+.theme-filter,
+.date-filter {
+    margin-bottom: 15px;
+}
+
+.date-filter input {
+    margin: 0 5px;
+}
+
+.reset-filters {
+    background-color: #f44336;
+    color: white;
+    padding: 8px 12px;
+    border: none;
+    border-radius: 4px;
+    cursor: pointer;
+}
+
+.reset-filters:hover {
+    background-color: #d32f2f;
+}
