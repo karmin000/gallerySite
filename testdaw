@@ -8,7 +8,6 @@ function ImageGallery() {
     const [currentPage, setCurrentPage] = useState(1);
     const [likes, setLikes] = useState({});
     const [dislikes, setDislikes] = useState({});
-    const [userVotes, setUserVotes] = useState({});
     const [selectedImage, setSelectedImage] = useState(null);
     const [selectedThemes, setSelectedThemes] = useState([]);
     const [dateRange, setDateRange] = useState({ start: '', end: '' });
@@ -21,28 +20,92 @@ function ImageGallery() {
     });
 
 
+    // useEffect(() => {
+    //     const fetchedImages = [
+    //         { id: 1, url: '/images/1.jpeg', title: 'Image 1', user: 'User 1', uploadDate: '2024-12-01', theme: 'Nature' },
+    //         { id: 2, url: '/images/2.jpeg', title: 'Image 2', user: 'User 2', uploadDate: '2021-12-02', theme: 'Architecture' },
+    //         { id: 3, url: '/images/3.jpeg', title: 'Image 3', user: 'User 3', uploadDate: '2024-12-03', theme: 'Nature' },
+    //         { id: 4, url: '/images/4.jpeg', title: 'Image 4', user: 'User 4', uploadDate: '2022-12-04', theme: 'Animals' },
+    //         { id: 5, url: '/images/5.jpeg', title: 'Image 5', user: 'User 5', uploadDate: '2024-12-05', theme: 'Architecture' },
+    //         { id: 6, url: '/images/4.jpeg', title: 'Image 6', user: 'User 6', uploadDate: '2024-12-06', theme: 'Nature' },
+    //         { id: 8, url: '/images/1.jpeg', title: 'Image 7', user: 'User 8', uploadDate: '2024-12-07', theme: 'Nature' },
+    //         { id: 9, url: '/images/2.jpeg', title: 'Image 8', user: 'User 9', uploadDate: '2024-12-07', theme: 'Animals' },
+    //         { id: 10, url: '/images/3.jpeg', title: 'Image 9', user: 'User 10', uploadDate: '2024-12-07', theme: 'Architecture' },
+    //         { id: 11, url: '/images/4.jpeg', title: 'Image 10', user: 'User 11', uploadDate: '2024-12-07', theme: 'Nature' },
+    //         { id: 12, url: '/images/5.jpeg', title: 'Image 11', user: 'User 12', uploadDate: '2024-12-07', theme: 'Animals' },
+    //         { id: 13, url: '/images/4.jpeg', title: 'Image 12', user: 'User 13', uploadDate: '2024-12-07', theme: 'Animals' },
+    //         { id: 14, url: '/images/1.jpeg', title: 'Image 13', user: 'User 14', uploadDate: '2023-12-07', theme: 'Animals' },
+    //         { id: 15, url: '/images/2.jpeg', title: 'Image 14', user: 'User 15', uploadDate: '2024-12-07', theme: 'Nature' },
+    //         { id: 16, url: '/images/3.jpeg', title: 'Image 15', user: 'User 16', uploadDate: '2024-12-07', theme: 'Animals' },
+    //         { id: 17, url: '/images/4.jpeg', title: 'Image 16', user: 'User 17', uploadDate: '2024-12-07', theme: 'Architecture' },
+    //     ];
+    //     setImages(fetchedImages);
+    // }, []);
+
+
     useEffect(() => {
         async function fetchImages() {
             const response = await fetch('http://localhost:5000/api/images');
             const data = await response.json();
             setImages(data);
-
-            const likesData = {};
-            const dislikesData = {};
-            const userVotesData = {};
-
-            data.forEach((image) => {
-                likesData[image.id] = image.likes || 0;
-                dislikesData[image.id] = image.dislikes || 0;
-                userVotesData[image.id] = { liked: false, disliked: false };
-            });
-
-            setLikes(likesData);
-            setDislikes(dislikesData);
-            setUserVotes(userVotesData);
         }
         fetchImages();
     }, []);
+
+    const handleUpload = async (file, imageData) => {
+        const token = localStorage.getItem('token');
+
+        // Получение пользователя из токена
+        const response = await fetch('http://localhost:5000/api/user', {
+            headers: {
+                Authorization: `Bearer ${token}`
+            }
+        });
+        const user = await response.json();
+
+        // Формирование данных формы
+        const formData = new FormData();
+        formData.append('file', file); // Добавляем файл
+        formData.append('title', imageData.title);
+        formData.append('theme', imageData.theme);
+        formData.append('upload_date', imageData.upload_date);
+        formData.append('user_id', user.id); // ID пользователя
+
+        // Отправка данных
+        await fetch('http://localhost:5000/api/images', {
+            method: 'POST',
+            headers: {
+                Authorization: `Bearer ${token}`
+            },
+            body: formData
+        });
+    };
+
+    const handleFileChange = (e) => {
+        setFile(e.target.files[0]);
+    };
+
+    const handleInputChange = (e) => {
+        const { name, value } = e.target;
+        setFormData((prevData) => ({
+            ...prevData,
+            [name]: value
+        }));
+    };
+
+    const handleFormSubmit = async (e) => {
+        e.preventDefault();
+        if (!file) {
+            alert('Please select a file to upload');
+            return;
+        }
+
+        await handleUpload(file, formData);
+        alert('Image uploaded successfully');
+        setFile(null);
+        setFormData({ title: '', theme: '', upload_date: new Date().toISOString().slice(0, 10) });
+    };
+
 
 
     const handleThemeChange = (theme) => {
@@ -73,7 +136,7 @@ function ImageGallery() {
 
 
     const filteredImages = images.filter((image) => {
-        const imageDate = new Date(image.upload_date);
+        const imageDate = new Date(image.uploadDate);
         const startDate = dateRange.start ? new Date(dateRange.start) : null;
         const endDate = dateRange.end ? new Date(dateRange.end) : null;
 
@@ -88,73 +151,19 @@ function ImageGallery() {
     });
 
     const handleLike = async (id) => {
-        if (userVotes[id]?.liked) return; // Prevent multiple likes
-
-        if (userVotes[id]?.disliked) {
-            // If the user previously disliked the image, decrement dislike
-            await fetch(`http://localhost:5000/api/images/${id}/dislike`, { method: 'PUT' });
-            setDislikes((prevDislikes) => ({
-                ...prevDislikes,
-                [id]: (prevDislikes[id] || 0) - 1,
-            }));
-        }
-
-        // Update backend to register like
         await fetch(`http://localhost:5000/api/images/${id}/like`, { method: 'PUT' });
         setLikes((prevLikes) => ({
             ...prevLikes,
             [id]: (prevLikes[id] || 0) + 1,
         }));
-
-        setUserVotes((prevVotes) => ({
-            ...prevVotes,
-            [id]: { liked: true, disliked: false },
-        }));
-
-        // Update backend with the user's liked image
-        const token = localStorage.getItem('token');
-        await fetch(`http://localhost:5000/api/user/like-image`, {
-            method: 'POST',
-            headers: {
-                Authorization: `Bearer ${token}`,
-            },
-            body: JSON.stringify({ imageId: id }),
-        });
     };
 
     const handleDislike = async (id) => {
-        if (userVotes[id]?.disliked) return; // Prevent multiple dislikes
-
-        if (userVotes[id]?.liked) {
-            // If the user previously liked the image, decrement like
-            await fetch(`http://localhost:5000/api/images/${id}/like`, { method: 'PUT' });
-            setLikes((prevLikes) => ({
-                ...prevLikes,
-                [id]: (prevLikes[id] || 0) - 1,
-            }));
-        }
-
-        // Update backend to register dislike
         await fetch(`http://localhost:5000/api/images/${id}/dislike`, { method: 'PUT' });
         setDislikes((prevDislikes) => ({
             ...prevDislikes,
             [id]: (prevDislikes[id] || 0) + 1,
         }));
-
-        setUserVotes((prevVotes) => ({
-            ...prevVotes,
-            [id]: { liked: false, disliked: true },
-        }));
-
-        // Update backend with the user's disliked image
-        const token = localStorage.getItem('token');
-        await fetch(`http://localhost:5000/api/user/dislike-image`, {
-            method: 'POST',
-            headers: {
-                Authorization: `Bearer ${token}`,
-            },
-            body: JSON.stringify({ imageId: id }),
-        });
     };
 
     const openModal = (image) => {
@@ -166,7 +175,7 @@ function ImageGallery() {
         setSelectedImage(null);
     };
 
-    const imagesPerPage = 20;
+    const imagesPerPage = 4;
     const indexOfLastImage = currentPage * imagesPerPage;
     const indexOfFirstImage = indexOfLastImage - imagesPerPage;
     const totalPages = Math.ceil(filteredImages.length / imagesPerPage);
@@ -174,7 +183,47 @@ function ImageGallery() {
     return (
         <div>
             <h1>Gallery</h1>
-
+            <h2>Upload Image</h2>
+            <form onSubmit={handleFormSubmit}>
+                <div>
+                    <label>Image File:</label>
+                    <input type="file" onChange={handleFileChange} accept="image/*" required/>
+                </div>
+                <div>
+                    <label>Title:</label>
+                    <input
+                        type="text"
+                        name="title"
+                        value={formData.title}
+                        onChange={handleInputChange}
+                        required
+                    />
+                </div>
+                <div>
+                    <label>Theme:</label>
+                    <select
+                        name="theme"
+                        value={formData.theme}
+                        onChange={handleInputChange}
+                        required
+                    >
+                        <option value="">Select Theme</option>
+                        <option value="Nature">Nature</option>
+                        <option value="Architecture">Architecture</option>
+                        <option value="Animals">Animals</option>
+                    </select>
+                </div>
+                <div>
+                    <label>Upload Date:</label>
+                    <input
+                        type="date"
+                        name="upload_date"
+                        value={formData.upload_date}
+                        onChange={handleInputChange}
+                    />
+                </div>
+                <button type="submit">Upload</button>
+            </form>
             <div className="filter-container">
 
                 <button className="toggle-filters" onClick={toggleFilters}>
@@ -232,8 +281,6 @@ function ImageGallery() {
                         dislikes={dislikes[image.id] || 0}
                         onLike={() => handleLike(image.id)}
                         onDislike={() => handleDislike(image.id)}
-                        disabledLike={userVotes[image.id]?.liked}
-                        disabledDislike={userVotes[image.id]?.disliked}
                         onClick={() => openModal(image)}
                     />
                 ))}

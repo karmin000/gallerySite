@@ -1,30 +1,30 @@
-// src/App.js
 import React, { useState } from 'react';
 import ImageGallery from './components/ImageGallery';
 import AuthForm from './components/AuthForm';
+import AdminGallery from './components/AdminGallery';
 
 function App() {
-    const [isAuthenticated, setIsAuthenticated] = useState(!!localStorage.getItem('token'));
+    const [userRole, setUserRole] = useState(null); // null, 'user', 'admin'
 
-    const handleAuthSuccess = () => {
-        setIsAuthenticated(true);
+    const handleAuthSuccess = (role) => {
+        setUserRole(role); // Запоминаем роль пользователя
     };
 
     const handleLogout = () => {
         localStorage.removeItem('token');
-        setIsAuthenticated(false);
+        setUserRole(null); // Сбрасываем роль при выходе
     };
 
     return (
         <div className="App">
-            {isAuthenticated ? (
+            {userRole && <button onClick={handleLogout}>Logout</button>}
+            {!userRole && (
                 <>
-                    <button onClick={handleLogout}>Logout</button>
-                    <ImageGallery />
+                    <AuthForm onAuthSuccess={handleAuthSuccess} />
                 </>
-            ) : (
-                <AuthForm onAuthSuccess={handleAuthSuccess} />
             )}
+            {userRole === 'user' && <ImageGallery />}
+            {userRole === 'admin' && <AdminGallery />}
         </div>
     );
 }

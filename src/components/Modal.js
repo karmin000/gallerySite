@@ -14,7 +14,7 @@ function Modal({ image, onClose, likes, dislikes, onLike, onDislike }) {
                 <img src={image.url} alt={image.title} className="modal-image"/>
                 <h3>{image.title}</h3>
                 <p>Uploaded by: {image.user}</p>
-                <p>Upload Date: {image.uploadDate}</p>
+                <p>Upload Date: {image.upload_date}</p>
                 <button onClick={(e) => {
                     e.stopPropagation();
                     onLike();
